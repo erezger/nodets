@@ -1,9 +1,11 @@
 import {Request, Response} from "express";
 import {ContactController} from "../controllers/contactController";
+import AuthController from "../controllers/authController";
 
 
 export class Router {
   public contactController: ContactController = new ContactController();
+  public authController: AuthController = new AuthController();
 
   public routes(app): void {
 
@@ -14,25 +16,27 @@ export class Router {
         })
       });
 
+    // contact routes
+    app.route('/contact')
     // Create a new contact
-    app.route('/contact')
-      .post(this.contactController.addNewContact);
-
-    // Get all contacts
-    app.route('/contact')
+      .post(this.contactController.addNewContact)
+      // Get all contacts
       .get(this.contactController.getContacts);
 
+    app.route('/contact/:contactId')
     // get a specific contact
-    app.route('/contact/:contactId')
-      .get(this.contactController.getContactWithID);
-
-    // update a specific contact
-    app.route('/contact/:contactId')
-      .put(this.contactController.updateContact);
-
-    // delete a specific contact
-    app.route('/contact/:contactId')
+      .get(this.contactController.getContactWithID)
+      // update a specific contact
+      .put(this.contactController.updateContact)
+      // delete a specific contact
       .delete(this.contactController.deleteContact);
+
+    // auth routes
+    app.route('/register')
+      .post(this.authController.registerNewUser);
+
+    app.route('/login')
+      .post(this.authController.authenticate);
 
   }
 }
