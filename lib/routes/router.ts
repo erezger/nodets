@@ -16,14 +16,17 @@ export class Router {
         })
       });
 
+    app.route('/api/*')
+      .all(this.authController.verifyJwt);
+
     // contact routes
-    app.route('/contact')
+    app.route('/api/contact')
     // Create a new contact
       .post(this.contactController.addNewContact)
       // Get all contacts
       .get(this.contactController.getContacts);
 
-    app.route('/contact/:contactId')
+    app.route('/api/contact/:contactId')
     // get a specific contact
       .get(this.contactController.getContactWithID)
       // update a specific contact

@@ -17,3 +17,12 @@ export const AuthSchema = new Schema({
     require: 'Enter user password',
   },
 });
+
+export interface TokenData {
+  token: string;
+  expiresIn: number;
+}
+
+export interface DataStoredInToken {
+  _id: string;
+}

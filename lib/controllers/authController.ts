@@ -1,19 +1,21 @@
 import * as mongoose from 'mongoose';
 import * as bcrypt from 'bcryptjs';
-import {Request, Response} from "express";
-import {AuthSchema} from "../models/authModel";
+import {NextFunction, Request, Response} from 'express';
+import {AuthSchema, DataStoredInToken, TokenData} from '../models/authModel';
+import * as jwt from 'jsonwebtoken';
 
+const ObjectId = require('mongodb').ObjectID;
 const User = mongoose.model('Auth', AuthSchema);
 
 export default class AuthController {
 
-  public static hashPassword(password: string, rounds: number, callback: (error: Error, hash: string) => void): void {
+  private static hashPassword(password: string, rounds: number, callback: (error: Error, hash: string) => void): void {
     bcrypt.hash(password, rounds, (error, hash) => {
       callback(error, hash);
     });
   }
 
-  public static compare(password: string, dbHash: string, callback: (error: string | null, match: boolean | null) => void) {
+  private static compare(password: string, dbHash: string, callback: (error: string | null, match: boolean | null) => void) {
     bcrypt.compare(password, dbHash, (err: Error, match: boolean) => {
       if (match) {
         // passwords match
@@ -23,6 +25,18 @@ export default class AuthController {
         callback('Invalid password match', null);
       }
     });
+  }
+
+  private static createToken(user: any): TokenData {
+    const expiresIn = 60 * 60; // an hour
+    const secret = process.env.JWT_SECRET;
+    const dataStoredInToken: DataStoredInToken = {
+      _id: user.id,
+    };
+    return {
+      expiresIn,
+      token: jwt.sign(dataStoredInToken, secret, {expiresIn}),
+    };
   }
 
   public registerNewUser(req: Request, res: Response) {
@@ -41,7 +55,7 @@ export default class AuthController {
           if (err) {
             // throw and error
           } else
-            res.json({status: "success", message: "User added successfully!!!", data: null});
+            res.json({status: 'success', message: 'User added successfully!!!', data: null});
         });
       }
     });
@@ -49,6 +63,7 @@ export default class AuthController {
 
   public authenticate(req: Request, res: Response) {
     let user = new User(req.body);
+    let me: any = this;
     User.findOne({email: req.body.email}, function (err, userInfo) {
       if (err) {
         // db error
@@ -61,13 +76,31 @@ export default class AuthController {
             res.send({status: 400, message: 'wrong password'});
           } else {
             console.log('password matches');
-            res.send({status: 200, message: 'password match'});
+            const tokenData = AuthController.createToken(userInfo);
+            userInfo.password = undefined;
+            res.send({tk: tokenData, data: userInfo, status: 200, message: 'password match'});
             // passwords match
           }
-        })
-
+        });
       }
     });
+  }
+
+  public verifyJwt(req: Request, res: Response, next: NextFunction) {
+    const secret = process.env.JWT_SECRET;
+    let tk = req.headers.authorization;
+    try {
+      const verificationResponse = jwt.verify(tk, secret) as DataStoredInToken;
+      User.findOne({_id: verificationResponse._id}, function (err, userInfo) {
+        if (err) {
+          // db error
+        } else {
+          next();
+        }
+      });
+    } catch (error) {
+      console.log('catch jew');
+    }
   }
 
 }
