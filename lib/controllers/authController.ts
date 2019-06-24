@@ -69,24 +69,28 @@ export default class AuthController {
       if (err) {
         next(new HttpException(500, 'db error'));
       } else {
-        // now lets compare the passwords
-        AuthController.compare(user.password, userInfo.password, (error: string | null, match: boolean | null) => {
-          if (error) {
-            // passwords did not match
-            next(new HttpException(400, 'invalid password or email'));
-          } else {
-            console.log('password matches');
-            const accessToken =
-              AuthController.createToken(userInfo);
-            userInfo.password = undefined;
-            res.send({
-              accessToken: accessToken,
-              data: userInfo,
-              status: 200,
-            });
-            // passwords match
-          }
-        });
+        try {
+          // now lets compare the passwords
+          AuthController.compare(user.password, userInfo.password, (error: string | null, match: boolean | null) => {
+            if (error) {
+              // passwords did not match
+              next(new HttpException(400, 'invalid password or email'));
+            } else {
+              console.log('password matches');
+              const accessToken =
+                AuthController.createToken(userInfo);
+              userInfo.password = undefined;
+              res.send({
+                accessToken: accessToken,
+                data: userInfo,
+                status: 200,
+              });
+              // passwords match
+            }
+          });
+        } catch (e) {
+          next(new HttpException(400, 'invalid password or email'));
+        }
       }
     });
   }
