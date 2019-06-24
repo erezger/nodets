@@ -3,6 +3,7 @@ import * as bcrypt from 'bcryptjs';
 import {NextFunction, Request, Response} from 'express';
 import {AuthSchema, DataStoredInToken, TokenData} from '../models/authModel';
 import * as jwt from 'jsonwebtoken';
+import HttpException from "../exceptions/HttpException";
 
 const ObjectId = require('mongodb').ObjectID;
 const User = mongoose.model('Auth', AuthSchema);
@@ -29,7 +30,7 @@ export default class AuthController {
 
   private static createToken(user: any): TokenData {
     const expiresIn = 60 * 60; // an hour
-    const secret = process.env.JWT_SECRET;
+    const secret = process.env.JWT_TOKEN_SECRET;
     const dataStoredInToken: DataStoredInToken = {
       _id: user.id,
     };
@@ -39,12 +40,12 @@ export default class AuthController {
     };
   }
 
-  public registerNewUser(req: Request, res: Response) {
+  public registerNewUser(req: Request, res: Response, next: NextFunction) {
     let newUser = new User(req.body);
 
     AuthController.hashPassword(newUser.password, 12, (err, hash) => {
       if (err) {
-        // throw and error
+        next(new HttpException(500, ''));
       } else {
         // store the new hash in the database etc
         User.create({
@@ -53,7 +54,7 @@ export default class AuthController {
           password: hash
         }, function (err, result) {
           if (err) {
-            // throw and error
+            next(new HttpException(500, ''));
           } else
             res.json({status: 'success', message: 'User added successfully!!!', data: null});
         });
@@ -61,24 +62,28 @@ export default class AuthController {
     });
   }
 
-  public authenticate(req: Request, res: Response) {
+  public authenticate(req: Request, res: Response, next: NextFunction) {
     let user = new User(req.body);
     let me: any = this;
     User.findOne({email: req.body.email}, function (err, userInfo) {
       if (err) {
-        // db error
+        next(new HttpException(500, 'db error'));
       } else {
         // now lets compare the passwords
         AuthController.compare(user.password, userInfo.password, (error: string | null, match: boolean | null) => {
           if (error) {
             // passwords did not match
-            console.log('wrong password')
-            res.send({status: 400, message: 'wrong password'});
+            next(new HttpException(400, 'invalid password or email'));
           } else {
             console.log('password matches');
-            const tokenData = AuthController.createToken(userInfo);
+            const accessToken =
+              AuthController.createToken(userInfo);
             userInfo.password = undefined;
-            res.send({tk: tokenData, data: userInfo, status: 200, message: 'password match'});
+            res.send({
+              accessToken: accessToken,
+              data: userInfo,
+              status: 200,
+            });
             // passwords match
           }
         });
@@ -93,13 +98,13 @@ export default class AuthController {
       const verificationResponse = jwt.verify(tk, secret) as DataStoredInToken;
       User.findOne({_id: verificationResponse._id}, function (err, userInfo) {
         if (err) {
-          // db error
+          next(err);
         } else {
           next();
         }
       });
     } catch (error) {
-      console.log('catch jew');
+      next(new HttpException(401, 'unAuthorized access token'));
     }
   }
 

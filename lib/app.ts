@@ -3,6 +3,7 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import {Router} from "./routes/router";
 import {MongooseDb} from "./db/mongoose";
+import errorMiddleware from "./middleware/errorMiddleware";
 
 class App {
 
@@ -15,6 +16,8 @@ class App {
     this.config();
     this.routePrv.routes(this.app);
     this.moong.connect();
+    // error middleware use
+    this.app.use(errorMiddleware);
   }
 
   private config(): void {
