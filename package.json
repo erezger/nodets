@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node ./lib/server.ts",
-    "start": "nodemon ./dist/server.js",
+    "start": "ts-node-dev ./lib/server.ts",
     "prod": "npm run build && npm run start"
   },
   "author": "Erez Gershon",
@@ -27,6 +27,7 @@
     "typescript": "^3.5.2"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^8.3.2"
+    "@types/jsonwebtoken": "^8.3.2",
+    "ts-node-dev": "^1.0.0-pre.40"
   }
 }

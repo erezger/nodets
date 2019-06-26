@@ -1,4 +1,4 @@
-import app from "./app";
+import app from './app';
 import * as dotenv from 'dotenv';
 
 const PORT = 3000;
