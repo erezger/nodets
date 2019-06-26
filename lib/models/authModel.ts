@@ -3,7 +3,7 @@ import * as mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 export const AuthSchema = new Schema({
-  userName: {
+  username: {
     type: String,
     require: 'Enter user name'
   },
@@ -20,7 +20,7 @@ export const AuthSchema = new Schema({
 
 export interface TokenData {
   token: string;
-  expiresIn: number;
+  expiresIn?: number;
 }
 
 export interface DataStoredInToken {

@@ -4,11 +4,14 @@ import {NextFunction, Request, Response} from 'express';
 import {AuthSchema, DataStoredInToken, TokenData} from '../models/authModel';
 import * as jwt from 'jsonwebtoken';
 import HttpException from "../exceptions/HttpException";
+import {ContactController} from "./contactController";
 
 const ObjectId = require('mongodb').ObjectID;
 const User = mongoose.model('Auth', AuthSchema);
 
 export default class AuthController {
+
+  private contactController: ContactController = new ContactController();
 
   private static hashPassword(password: string, rounds: number, callback: (error: Error, hash: string) => void): void {
     bcrypt.hash(password, rounds, (error, hash) => {
@@ -35,7 +38,6 @@ export default class AuthController {
       _id: user.id,
     };
     return {
-      expiresIn,
       token: jwt.sign(dataStoredInToken, secret, {expiresIn}),
     };
   }
@@ -51,6 +53,7 @@ export default class AuthController {
         User.create({
           name: req.body.name,
           email: req.body.email,
+          username: req.body.username,
           password: hash
         }, function (err, result) {
           if (err) {
