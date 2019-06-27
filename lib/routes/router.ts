@@ -1,10 +1,10 @@
-import {Request, Response} from "express";
-import {ContactController} from "../controllers/contactController";
-import AuthController from "../controllers/authController";
+import {Request, Response} from 'express';
+import {TaskController} from '../controllers/taskController';
+import AuthController from '../controllers/authController';
 
 
 export class Router {
-  public contactController: ContactController = new ContactController();
+  public taskController: TaskController = new TaskController();
   public authController: AuthController = new AuthController();
 
   public routes(app): void {
@@ -20,19 +20,17 @@ export class Router {
       .all(this.authController.verifyJwt);
 
     // contact routes
-    app.route('/api/contact')
+    app.route('/api/task')
     // Create a new contact
-      .post(this.contactController.addNewContact)
+      .post(this.taskController.addNewTask)
       // Get all contacts
-      .get(this.contactController.getContacts);
-
-    app.route('/api/contact/:contactId')
-    // get a specific contact
-      .get(this.contactController.getContactWithID)
+      .get(this.taskController.getTasks)
       // update a specific contact
-      .put(this.contactController.updateContact)
-      // delete a specific contact
-      .delete(this.contactController.deleteContact);
+      .put(this.taskController.updateTaskStatus);
+
+    app.route('/api/task/:contactId')
+    // delete a specific contact
+      .delete(this.taskController.deleteTask);
 
     // auth routes
     app.route('/register')

@@ -3,15 +3,12 @@ import * as bcrypt from 'bcryptjs';
 import {NextFunction, Request, Response} from 'express';
 import {AuthSchema, DataStoredInToken, TokenData} from '../models/authModel';
 import * as jwt from 'jsonwebtoken';
-import HttpException from "../exceptions/HttpException";
-import {ContactController} from "./contactController";
+import HttpException from '../exceptions/HttpException';
 
 const ObjectId = require('mongodb').ObjectID;
 const User = mongoose.model('Auth', AuthSchema);
 
 export default class AuthController {
-
-  private contactController: ContactController = new ContactController();
 
   private static hashPassword(password: string, rounds: number, callback: (error: Error, hash: string) => void): void {
     bcrypt.hash(password, rounds, (error, hash) => {
@@ -80,11 +77,10 @@ export default class AuthController {
               next(new HttpException(400, 'invalid password or email'));
             } else {
               console.log('password matches');
-              const accessToken =
-                AuthController.createToken(userInfo);
+              const accessToken = AuthController.createToken(userInfo);
               userInfo.password = undefined;
               res.send({
-                accessToken: accessToken,
+                accessToken: accessToken.token,
                 data: userInfo,
                 status: 200,
               });
@@ -99,8 +95,9 @@ export default class AuthController {
   }
 
   public verifyJwt(req: Request, res: Response, next: NextFunction) {
-    const secret = process.env.JWT_SECRET;
+    const secret = process.env.JWT_TOKEN_SECRET;
     let tk = req.headers.authorization;
+    console.log('req headers: ', req.headers.authorization);
     try {
       const verificationResponse = jwt.verify(tk, secret) as DataStoredInToken;
       User.findOne({_id: verificationResponse._id}, function (err, userInfo) {

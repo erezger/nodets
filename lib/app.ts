@@ -4,6 +4,7 @@ import * as bodyParser from "body-parser";
 import {Router} from "./routes/router";
 import {MongooseDb} from "./db/mongoose";
 import errorMiddleware from "./middleware/errorMiddleware";
+import * as cors from 'cors';
 
 class App {
 
@@ -13,11 +14,7 @@ class App {
 
   constructor() {
     this.app = express();
-    this.app.use(function (req, res, next) {
-      res.header("Access-Control-Allow-Origin", "*");
-      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-      next();
-    });
+    this.app.use(cors());
     this.config();
     this.routePrv.routes(this.app);
     this.moong.connect();
