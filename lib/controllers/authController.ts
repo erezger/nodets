@@ -1,12 +1,10 @@
-import * as mongoose from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import {NextFunction, Request, Response} from 'express';
-import {AuthSchema, DataStoredInToken, TokenData} from '../models/authModel';
+import authModel, {DataStoredInToken, TokenData} from '../models/authModel';
 import * as jwt from 'jsonwebtoken';
 import HttpException from '../exceptions/HttpException';
 
 const ObjectId = require('mongodb').ObjectID;
-const User = mongoose.model('Auth', AuthSchema);
 
 export default class AuthController {
 
@@ -40,14 +38,14 @@ export default class AuthController {
   }
 
   public registerNewUser(req: Request, res: Response, next: NextFunction) {
-    let newUser = new User(req.body);
+    let newUser = new authModel(req.body);
 
     AuthController.hashPassword(newUser.password, 12, (err, hash) => {
       if (err) {
         next(new HttpException(500, ''));
       } else {
         // store the new hash in the database etc
-        User.create({
+        authModel.create({
           name: req.body.name,
           email: req.body.email,
           username: req.body.username,
@@ -63,9 +61,9 @@ export default class AuthController {
   }
 
   public authenticate(req: Request, res: Response, next: NextFunction) {
-    let user = new User(req.body);
+    let user = new authModel(req.body);
     let me: any = this;
-    User.findOne({email: req.body.email}, function (err, userInfo) {
+    authModel.findOne({email: req.body.email}, function (err, userInfo) {
       if (err) {
         next(new HttpException(500, 'db error'));
       } else {
@@ -100,12 +98,26 @@ export default class AuthController {
     console.log('req headers: ', req.headers.authorization);
     try {
       const verificationResponse = jwt.verify(tk, secret) as DataStoredInToken;
-      User.findOne({_id: verificationResponse._id}, function (err, userInfo) {
+      authModel.findOne({_id: verificationResponse._id}, function (err, userInfo) {
         if (err) {
           next(err);
         } else {
+          req.body.userId = userInfo._id;
           next();
         }
+      });
+    } catch (error) {
+      next(new HttpException(401, 'unAuthorized access token'));
+    }
+  }
+
+  public getAllUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      authModel.find({}, (err, users) => {
+        if (err) {
+          res.send(err);
+        }
+        res.json(users);
       });
     } catch (error) {
       next(new HttpException(401, 'unAuthorized access token'));

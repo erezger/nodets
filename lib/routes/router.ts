@@ -19,7 +19,7 @@ export class Router {
     app.route('/api/*')
       .all(this.authController.verifyJwt);
 
-    // contact routes
+    // tasks routes
     app.route('/api/task')
     // Create a new contact
       .post(this.taskController.addNewTask)
@@ -31,6 +31,11 @@ export class Router {
     app.route('/api/task/:contactId')
     // delete a specific contact
       .delete(this.taskController.deleteTask);
+
+    // users routes
+    app.route('/api/users')
+    // get all users
+      .get(this.authController.getAllUsers)
 
     // auth routes
     app.route('/register')

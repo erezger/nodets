@@ -1,24 +1,22 @@
-import * as mongoose from 'mongoose';
-import {TaskSchema} from '../models/taskModel';
+import taskModel from '../models/taskModel';
 import {Request, Response} from 'express';
-
-const Task = mongoose.model('Task', TaskSchema);
 
 export class TaskController {
 
   public getTasks(req: Request, res: Response) {
-    Task.find({}, (err, tasks) => {
+    taskModel.find({}, (err, tasks) => {
       if (err) {
         console.log(err);
         res.send(err);
       }
       console.log(tasks);
       res.json(tasks);
-    });
+    }).populate('reporter').populate('assigneeTo');
   }
 
   public addNewTask(req: Request, res: Response) {
-    let newTask = new Task(req.body);
+    let newTask = new taskModel(req.body);
+    newTask.reporter = req.body.userId;
 
     newTask.save((err, tasks) => {
       if (err) {
@@ -29,11 +27,7 @@ export class TaskController {
   }
 
   public updateTaskStatus(req: Request, res: Response) {
-    let newTask = new Task(req.body);
-    console.log('req body111', req.body);
-    console.log('req body222', req.body.id);
-    console.log('req body333', req.body._id);
-    Task.findOneAndUpdate({_id: req.body._id}, req.body, {new: true}, (err, task) => {
+    taskModel.findOneAndUpdate({_id: req.body._id}, req.body, {new: true}, (err, task) => {
       if (err) {
         res.send(err);
       }
@@ -42,7 +36,7 @@ export class TaskController {
   }
 
   public deleteTask(req: Request, res: Response) {
-    Task.remove({_id: req.params.id}, (err, task) => {
+    taskModel.remove({_id: req.params.id}, (err, task) => {
       if (err) {
         res.send(err);
       }

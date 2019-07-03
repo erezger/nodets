@@ -1,22 +1,10 @@
 import * as mongoose from 'mongoose';
 
-const Schema = mongoose.Schema;
-
-export const AuthSchema = new Schema({
-  username: {
-    type: String,
-    require: 'Enter user name'
-  },
-  email: {
-    type: String,
-    require: 'Enter user email address',
-    unique: true
-  },
-  password: {
-    type: String,
-    require: 'Enter user password',
-  },
-});
+export interface Auth {
+  username: string;
+  email: string;
+  password: string;
+}
 
 export interface TokenData {
   token: string;
@@ -26,3 +14,25 @@ export interface TokenData {
 export interface DataStoredInToken {
   _id: string;
 }
+
+const Schema = mongoose.Schema;
+
+const authSchema = new Schema({
+  username: {
+    type: String,
+    require: 'Enter user name',
+  },
+  email: {
+    type: String,
+    require: 'Enter user email address',
+    unique: true,
+  },
+  password: {
+    type: String,
+    require: 'Enter user password',
+    select: false,
+  },
+});
+
+const authModel = mongoose.model<Auth & mongoose.Document>('Auth', authSchema);
+export default authModel;
