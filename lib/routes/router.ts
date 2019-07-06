@@ -1,11 +1,13 @@
 import {Request, Response} from 'express';
 import {TaskController} from '../controllers/taskController';
 import AuthController from '../controllers/authController';
+import UserController from "../controllers/userController";
 
 
 export class Router {
   public taskController: TaskController = new TaskController();
   public authController: AuthController = new AuthController();
+  public userController: UserController = new UserController();
 
   public routes(app): void {
 
@@ -35,7 +37,7 @@ export class Router {
     // users routes
     app.route('/api/users')
     // get all users
-      .get(this.authController.getAllUsers)
+      .get(this.userController.getAllUsers)
 
     // auth routes
     app.route('/register')

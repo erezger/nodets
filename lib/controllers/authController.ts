@@ -1,8 +1,8 @@
 import * as bcrypt from 'bcryptjs';
 import {NextFunction, Request, Response} from 'express';
-import authModel, {DataStoredInToken, TokenData} from '../models/authModel';
 import * as jwt from 'jsonwebtoken';
 import HttpException from '../exceptions/HttpException';
+import User, {DataStoredInToken, IUser, TokenData} from '../models/userModel';
 
 const ObjectId = require('mongodb').ObjectID;
 
@@ -38,19 +38,19 @@ export default class AuthController {
   }
 
   public registerNewUser(req: Request, res: Response, next: NextFunction) {
-    let newUser = new authModel(req.body);
+    let newUser = {
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+    } as IUser;
 
     AuthController.hashPassword(newUser.password, 12, (err, hash) => {
       if (err) {
         next(new HttpException(500, ''));
       } else {
+        newUser.password = hash;
         // store the new hash in the database etc
-        authModel.create({
-          name: req.body.name,
-          email: req.body.email,
-          username: req.body.username,
-          password: hash
-        }, function (err, result) {
+        User.create(newUser, function (err, result) {
           if (err) {
             next(new HttpException(500, ''));
           } else
@@ -61,9 +61,13 @@ export default class AuthController {
   }
 
   public authenticate(req: Request, res: Response, next: NextFunction) {
-    let user = new authModel(req.body);
+    let user = {
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+    } as IUser;
     let me: any = this;
-    authModel.findOne({email: req.body.email}, function (err, userInfo) {
+    User.findOne({email: req.body.email}, function (err, userInfo) {
       if (err) {
         next(new HttpException(500, 'db error'));
       } else {
@@ -95,10 +99,9 @@ export default class AuthController {
   public verifyJwt(req: Request, res: Response, next: NextFunction) {
     const secret = process.env.JWT_TOKEN_SECRET;
     let tk = req.headers.authorization;
-    console.log('req headers: ', req.headers.authorization);
     try {
       const verificationResponse = jwt.verify(tk, secret) as DataStoredInToken;
-      authModel.findOne({_id: verificationResponse._id}, function (err, userInfo) {
+      User.findOne({_id: verificationResponse._id}, function (err, userInfo) {
         if (err) {
           next(err);
         } else {
@@ -113,7 +116,7 @@ export default class AuthController {
 
   public getAllUsers(req: Request, res: Response, next: NextFunction) {
     try {
-      authModel.find({}, (err, users) => {
+      User.find({}, (err, users) => {
         if (err) {
           res.send(err);
         }

@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
 
-export interface Auth {
+export interface IUser {
   username: string;
   email: string;
   password: string;
@@ -17,7 +17,7 @@ export interface DataStoredInToken {
 
 const Schema = mongoose.Schema;
 
-const authSchema = new Schema({
+const userSchema = new Schema({
   username: {
     type: String,
     require: 'Enter user name',
@@ -30,9 +30,8 @@ const authSchema = new Schema({
   password: {
     type: String,
     require: 'Enter user password',
-    select: false,
   },
 });
 
-const authModel = mongoose.model<Auth & mongoose.Document>('Auth', authSchema);
-export default authModel;
+const User = mongoose.model<IUser & mongoose.Document>('users', userSchema);
+export default User;
